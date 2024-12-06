@@ -1,6 +1,6 @@
 ---
 theme: default
-title: QuizApp With LLM
+title: Build Web App with LLM
 author: Tan Phat Nguyen
 presenter: false
 colorSchema: auto
@@ -8,42 +8,230 @@ transition: slide-left
 mdc: true
 ---
 
-# Welcome to Slidev
-
-Presentation slides for developers
-
+# Build Web App with LLM
+Tan Phat Nguyen
 
 <!--
-The last comment block of each slide will be treated as slide notes. It will be visible and editable in Presenter Mode along with the slide. [Read more in the docs](https://sli.dev/guide/syntax.html#notes)
+Note
 -->
 
 ---
-transition: slide-left
----
 
-# What is Slidev?
-
-Slidev is a slides maker and presenter designed for developers, consist of the following features
-
-- 📝 **Text-based** - focus on the content with Markdown, and then style them later
-- 🎨 **Themable** - themes can be shared and re-used as npm packages
-- 🧑‍💻 **Developer Friendly** - code highlighting, live coding with autocompletion
-- 🤹 **Interactive** - embed Vue components to enhance your expressions
-- 🎥 **Recording** - built-in recording and camera view
-- 📤 **Portable** - export to PDF, PPTX, PNGs, or even a hostable SPA
-- 🛠 **Hackable** - virtually anything that's possible on a webpage is possible in Slidev
-<br>
-<br>
-
-Read more about [Why Slidev?](https://sli.dev/guide/why)
-
-<!--
-Here is another comment.
--->
+<Toc v-click minDepth="1" maxDepth="1" />
 
 ---
-transition: slide-left
-level: 2
+
+# Techstacks
+
+- [Nuxt](https://nuxt.com/) <logos-nuxt-icon />
+  - Full-stack framework built on [VueJS](https://vuejs.org)
+
+- [SQLite](https://www.sqlite.org/) <logos-sqlite />
+  - Lightweight and fast
+  - Vector support with [extension](https://github.com/asg017/sqlite-vec)
+
+- [Ollama](https://ollama.com/) <IconOllama class="size-6"/>
+  - Model management
+  - Easy to use
+
+---
+
+# Ollama CLI
+
+- Download CLI [here](https://ollama.com/download)
+- Find a model [here](https://ollama.com/search)
+```sh {none|1|3|5|all}
+ollama pull llama3.2:3b
+
+ollama show llama3.2:3b
+
+ollama run llama3.2:3b
+```
+
+- Served at [http://localhost:11434](http://localhost:11434)
+```sh {none|all}
+curl http://localhost:11434/api/generate -d '{
+  "model": "llama3.2",
+  "prompt": "Explain LLM in 3 sentences.',
+  "stream": false
+}'
+```
+
+---
+
+# Ollama-JS
+
+- `ollama.generate`
+```ts {monaco-run}{autorun:false}
+import ollama from 'ollama/browser'
+
+const response = await ollama.generate({
+  model: 'llama3.2:3b',
+  prompt: 'Explain LLM in 3 sentences.',
+  stream: false
+})
+
+console.log(response.response)
+```
+
+---
+hideInToc: true
+---
+
+# Ollama-JS
+
+- `ollama.generate` with `steam = true`
+```ts {monaco-run}{autorun:false}
+import ollama from 'ollama/browser'
+
+let output = ''
+const response = await ollama.generate({
+  model: 'llama3.2:3b',
+  prompt: 'Explain LLM in 3 sentences.',
+  stream: true
+})
+
+for await (const r of response) {
+  output += r.response
+  console.clear()
+  console.log(output)
+}
+```
+
+---
+hideInToc: true
+---
+
+# Ollama-JS
+
+- `ollama.chat`
+```ts {monaco-run}{autorun:false}
+import ollama from 'ollama/browser'
+
+const response = await ollama.chat({
+  model: 'llama3.2:3b',
+  messages: [
+    { role: 'user', content: 'Explain LLM in 3 sentences.' }
+  ],
+  stream: false
+})
+
+console.log(response.message.content)
+```
+
+---
+hideInToc: true
+---
+
+# Ollama-JS
+
+- `ollama.chat`
+```ts {monaco-run}{autorun:false}
+import ollama from 'ollama/browser'
+
+const response = await ollama.chat({
+  model: 'llama3.2:3b',
+  messages: [
+    { role: 'system', content: `You explain like I'm five years old.` },
+    { role: 'user', content: 'Explain LLM in 3 sentences.' }
+  ],
+})
+
+console.log({ role: 'assistant', content: response.message.content })
+```
+
+---
+
+# Integration in App
+
+- Generate card's definition
+```ts
+async function genDef(c: Card) {
+  await $genStream(
+    `"${c.term}": Provide a short, plain text definition without any redundant information.`,
+    o => c.def += o,
+  )
+}
+```
+
+---
+hideInToc: true
+---
+
+# Integration in App
+
+- Generate cards
+
+```ts
+const response = await $gen(
+  `Using the reference cards: ${JSON.stringify(set.value.cards)}, generate new, meaningful cards in JSON format. Each card must follow the schema below, match the style and type of content of the reference cards, and provide unique information. Avoid repeating exact terms from the reference cards.
+
+JSON Schema:
+{
+  "cards": [
+    { "term": "string", "def": "string" }
+  ]
+}`,
+  { format: 'json' }
+)
+```
+
+<style>
+  span{ white-space: pre-wrap; }
+</style>
+
+---
+hideInToc: true
+---
+
+# Validate with `zod`
+
+```ts {monaco-run}
+import { z } from 'zod'
+
+const schema1 = z.string()
+console.log(schema1.parse(8))
+
+const schema2 = z.object({
+  term: z.string(),
+  definition: z.string()
+})
+
+console.log(schema2.parse({ term: 'Term', definition: undefined }))
+```
+
+---
+hideInToc: true
+---
+
+# Integration in App
+
+- Generate cards
+
+```ts {12-17}
+const response = await $gen(
+  `Using the reference cards: ${JSON.stringify(set.value.cards)}, generate new, meaningful cards in JSON format. Each card must follow the schema below, match the style and type of content of the reference cards, and provide unique information. Avoid repeating exact terms from the reference cards.
+
+JSON Schema:
+{
+  "cards": [
+    { "term": "string", "def": "string" }
+  ]
+}`,
+  { format: 'json' }
+)
+
+const schema = z.object({
+  cards: z.object({ term: z.string(), def: z.string() }).array(),
+})
+
+const { data, error } = schema.safeParse(JSON.parse(response))
+```
+
+<style>
+  span{ white-space: pre-wrap; }
+</style>
+
 ---
 
 # Navigation
@@ -58,7 +246,6 @@ Hover on the bottom-left corner to see the navigation's controls panel, [learn m
 | <kbd>left</kbd>  / <kbd>shift</kbd><kbd>space</kbd> | previous animation or slide |
 | <kbd>up</kbd> | previous slide |
 | <kbd>down</kbd> | next slide |
-
 
 ---
 layout: two-cols
@@ -80,7 +267,6 @@ The title will be inferred from your slide content, or you can override it with 
 <Toc v-click minDepth="1" maxDepth="1" />
 
 ---
-
 
 # Code
 
@@ -107,8 +293,6 @@ doubled.value = 2
 <!-- Footer -->
 
 [Learn more](https://sli.dev/features/line-highlighting)
-
-
 
 <!--
 Notes can also sync with clicks
@@ -215,16 +399,12 @@ We have provided a few built-in components like `<Tweet/>` and `<Youtube/>` that
 
 Check out [the guides](https://sli.dev/builtin/components.html) for more.
 
-
 ```html
 <Tweet id="1390115482657726468" />
 ```
 
-<Tweet id="1390115482657726468" scale="0.65" />
 </div>
 </div>
-
-
 
 <!--
 Presenter note with **bold**, *italic*, and ~~striked~~ text.
@@ -487,7 +667,7 @@ Learn more: [Mermaid Diagrams](https://sli.dev/features/mermaid) and [PlantUML D
 ---
 foo: bar
 dragPos:
-  square: 446,159,167,_,-16
+  square: 0,-113,0,0
 ---
 
 # Draggable Elements

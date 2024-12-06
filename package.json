@@ -8,9 +8,15 @@
     "export": "slidev export"
   },
   "dependencies": {
-    "@slidev/cli": "^0.50.0-beta.7",
+    "@slidev/cli": "^0.50.0-beta.10",
     "@slidev/theme-default": "latest",
+    "ollama": "^0.5.10",
     "vue": "^3.5.13",
     "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^3.11.2",
+    "@iconify-json/logos": "^1.2.3",
+    "eslint": "^9.16.0"
   }
 }
