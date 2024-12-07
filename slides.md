@@ -17,7 +17,7 @@ Note
 
 ---
 
-<Toc v-click minDepth="1" maxDepth="1" />
+<Toc minDepth="1" maxDepth="1" />
 
 ---
 
@@ -137,7 +137,7 @@ const response = await ollama.chat({
   ],
 })
 
-console.log({ role: 'assistant', content: response.message.content })
+console.log(response.message)
 ```
 
 ---
@@ -146,607 +146,437 @@ console.log({ role: 'assistant', content: response.message.content })
 
 - Generate card's definition
 ```ts
-async function genDef(c: Card) {
-  await $genStream(
-    `"${c.term}": Provide a short, plain text definition without any redundant information.`,
-    o => c.def += o,
-  )
+async function generateDef(c: Card) {
+  c.def = await $generate(`"${c.term}": Provide a short, plain text definition without any redundant information.`)
 }
 ```
 
----
-hideInToc: true
----
+<v-click>
 
-# Integration in App
-
-- Generate cards
+- `$generate` function
 
 ```ts
-const response = await $gen(
-  `Using the reference cards: ${JSON.stringify(set.value.cards)}, generate new, meaningful cards in JSON format. Each card must follow the schema below, match the style and type of content of the reference cards, and provide unique information. Avoid repeating exact terms from the reference cards.
-
-JSON Schema:
-{
-  "cards": [
-    { "term": "string", "def": "string" }
-  ]
-}`,
-  { format: 'json' }
-)
-```
-
-<style>
-  span{ white-space: pre-wrap; }
-</style>
-
----
-hideInToc: true
----
-
-# Validate with `zod`
-
-```ts {monaco-run}
-import { z } from 'zod'
-
-const schema1 = z.string()
-console.log(schema1.parse(8))
-
-const schema2 = z.object({
-  term: z.string(),
-  definition: z.string()
-})
-
-console.log(schema2.parse({ term: 'Term', definition: undefined }))
-```
-
----
-hideInToc: true
----
-
-# Integration in App
-
-- Generate cards
-
-```ts {12-17}
-const response = await $gen(
-  `Using the reference cards: ${JSON.stringify(set.value.cards)}, generate new, meaningful cards in JSON format. Each card must follow the schema below, match the style and type of content of the reference cards, and provide unique information. Avoid repeating exact terms from the reference cards.
-
-JSON Schema:
-{
-  "cards": [
-    { "term": "string", "def": "string" }
-  ]
-}`,
-  { format: 'json' }
-)
-
-const schema = z.object({
-  cards: z.object({ term: z.string(), def: z.string() }).array(),
-})
-
-const { data, error } = schema.safeParse(JSON.parse(response))
-```
-
-<style>
-  span{ white-space: pre-wrap; }
-</style>
-
----
-
-# Navigation
-
-Hover on the bottom-left corner to see the navigation's controls panel, [learn more](https://sli.dev/guide/ui#navigation-bar)
-
-## Keyboard Shortcuts
-
-|     |     |
-| --- | --- |
-| <kbd>right</kbd> / <kbd>space</kbd>| next animation or slide |
-| <kbd>left</kbd>  / <kbd>shift</kbd><kbd>space</kbd> | previous animation or slide |
-| <kbd>up</kbd> | previous slide |
-| <kbd>down</kbd> | next slide |
-
----
-layout: two-cols
-layoutClass: gap-16
----
-
-# Table of contents
-
-You can use the `Toc` component to generate a table of contents for your slides:
-
-```html
-<Toc minDepth="1" maxDepth="1" />
-```
-
-The title will be inferred from your slide content, or you can override it with `title` and `level` in your frontmatter.
-
-::right::
-
-<Toc v-click minDepth="1" maxDepth="1" />
-
----
-
-# Code
-
-Use code snippets and get the highlighting directly, and even types hover!
-
-```ts {all|5|7|7-8|10|all} twoslash
-// TwoSlash enables TypeScript hover information
-// and errors in markdown code blocks
-// More at https://shiki.style/packages/twoslash
-
-import { computed, ref } from 'vue'
-
-const count = ref(0)
-const doubled = computed(() => count.value * 2)
-
-doubled.value = 2
-```
-
-<arrow v-click="[4, 5]" x1="350" y1="310" x2="195" y2="334" color="#953" width="2" arrowSize="1" />
-
-<!-- This allow you to embed external code blocks -->
-<<< @/snippets/external.ts#snippet
-
-<!-- Footer -->
-
-[Learn more](https://sli.dev/features/line-highlighting)
-
-<!--
-Notes can also sync with clicks
-
-[click] This will be highlighted after the first click
-
-[click] Highlighted with `count = ref(0)`
-
-[click:3] Last click (skip two clicks)
--->
-
----
-
-# Shiki Magic Move
-
-Powered by [shiki-magic-move](https://shiki-magic-move.netlify.app/), Slidev supports animations across multiple code snippets.
-
-Add multiple code blocks and wrap them with <code>````md magic-move</code> (four backticks) to enable the magic move. For example:
-
-````md magic-move {lines: true}
-```ts {*|2|*}
-// step 1
-const author = reactive({
-  name: 'John Doe',
-  books: [
-    'Vue 2 - Advanced Guide',
-    'Vue 3 - Basic Guide',
-    'Vue 4 - The Mystery'
-  ]
-})
-```
-
-```ts {*|1-2|3-4|3-4,8}
-// step 2
-export default {
-  data() {
-    return {
-      author: {
-        name: 'John Doe',
-        books: [
-          'Vue 2 - Advanced Guide',
-          'Vue 3 - Basic Guide',
-          'Vue 4 - The Mystery'
-        ]
-      }
-    }
-  }
-}
-```
-
-```ts
-// step 3
-export default {
-  data: () => ({
-    author: {
-      name: 'John Doe',
-      books: [
-        'Vue 2 - Advanced Guide',
-        'Vue 3 - Basic Guide',
-        'Vue 4 - The Mystery'
-      ]
-    }
+async function $generate(promt: string) {
+  const response = await ollama.generate({
+    model: 'llama3.2:3b',
+    prompt,
+    stream: false
   })
+
+  return response.response
 }
 ```
+</v-click>
 
-Non-code blocks are ignored.
+---
+hideInToc: true
+---
 
-```vue
-<!-- step 4 -->
-<script setup>
-const author = {
-  name: 'John Doe',
-  books: [
-    'Vue 2 - Advanced Guide',
-    'Vue 3 - Basic Guide',
-    'Vue 4 - The Mystery'
+# Integration in App
+
+- Generate cards
+
+````md magic-move
+```ts
+const response = await $generate(
+  `Using the reference cards: ${set.value.cards}, generate new, meaningful cards in JSON format using following
+  JSON schema:
+{
+  "cards": [
+    { "term": "string", "def": "string" }
   ]
-}
-</script>
+}`
+)
+```
+
+```ts
+const response = await $generate(
+  `Using the reference cards: ${set.value.cards}, generate new, meaningful cards in JSON format using following
+  JSON schema:
+{
+  "cards": [
+    { "term": "string", "def": "string" }
+  ]
+}`
+)
+
+// {
+//   "cards": [
+//     { "term": "Capital of Germany", "def": "Berlin" }
+//     ...
+//   ]
+// }
+
+const cards = JSON.parse(response).cards // Array of cards
+```
+
+```ts
+const response = await $generate(
+  `Using the reference cards: ${set.value.cards}, generate new, meaningful cards in JSON format using following
+  JSON schema:
+{
+  "cards": [
+    { "term": "string", "def": "string" }
+  ]
+}`
+)
+
+// Here are generated cards as your instruction:
+// {
+//   "cards": [
+//     { "term": "Capital of Germany", "def": "Berlin" }
+//     ...
+//   ]
+// }
+
+const cards = JSON.parse(response).cards // SyntaxError: Unexpected token 'H', "Here are  "... is not valid JSON
 ```
 ````
 
 ---
 
-# Components
+# Validation with `zod`
 
-<div grid="~ cols-2 gap-4">
-<div>
+```ts {monaco-run}
+import { z } from 'zod'
 
-You can use Vue components directly inside your slides.
+const schema = z.object({
+  cards: z.object({
+    term: z.string().describe('This is term'),
+    def: z.string().describe('This is def')
+  }).array()
+})
 
-We have provided a few built-in components like `<Tweet/>` and `<Youtube/>` that you can use directly. And adding your custom components is also super easy.
+const output = `{
+  "cards": [
+    { "term": "Capital of Germany", "def": "Berlin" }
+  ]
+}`
 
-```html
-<Counter :count="10" />
+console.log(schema.parse(JSON.parse(output)))
 ```
-</div>
-
-<div>
-
-<!-- ./components/Counter.vue -->
-<Counter :count="10" m="t-4" />
-
-Check out [the guides](https://sli.dev/builtin/components.html) for more.
-
-```html
-<Tweet id="1390115482657726468" />
-```
-
-</div>
-</div>
 
 <!--
-Presenter note with **bold**, *italic*, and ~~striked~~ text.
-
-Also, HTML elements are valid:
-<div class="flex w-full">
-  <span style="flex-grow: 1;">Left content</span>
-  <span>Right content</span>
-</div>
+Change Berlin to null then number or not exists
 -->
 
 ---
-class: px-20
----
 
-# Themes
-
-Slidev comes with powerful theming support. Themes can provide styles, layouts, components, or even configurations for tools. Switching between themes by just **one edit** in your frontmatter:
-
-<div grid="~ cols-2 gap-2" m="t-2">
-
-```yaml
----
-theme: default
----
-```
-
-```yaml
----
-theme: seriph
----
-```
-
-<img border="rounded" src="https://github.com/slidevjs/themes/blob/main/screenshots/theme-default/01.png?raw=true" alt="">
-
-<img border="rounded" src="https://github.com/slidevjs/themes/blob/main/screenshots/theme-seriph/01.png?raw=true" alt="">
-
-</div>
-
-Read more about [How to use a theme](https://sli.dev/guide/theme-addon#use-theme) and
-check out the [Awesome Themes Gallery](https://sli.dev/resources/theme-gallery).
-
----
-
-# Clicks Animations
-
-You can add `v-click` to elements to add a click animation.
-
-<div v-click>
-
-This shows up when you click the slide:
-
-```html
-<div v-click>This shows up when you click the slide.</div>
-```
-
-</div>
-
-<br>
-
-<v-click>
-
-The <span v-mark.red="3"><code>v-mark</code> directive</span>
-also allows you to add
-<span v-mark.circle.orange="4">inline marks</span>
-, powered by [Rough Notation](https://roughnotation.com/):
-
-```html
-<span v-mark.underline.orange>inline markers</span>
-```
-
-</v-click>
-
-<div mt-20 v-click>
-
-[Learn more](https://sli.dev/guide/animations#click-animation)
-
-</div>
-
----
-
-# Motions
-
-Motion animations are powered by [@vueuse/motion](https://motion.vueuse.org/), triggered by `v-motion` directive.
-
-```html
-<div
-  v-motion
-  :initial="{ x: -80 }"
-  :enter="{ x: 0 }"
-  :click-3="{ x: 80 }"
-  :leave="{ x: 1000 }"
->
-  Slidev
-</div>
-```
-
-<div class="w-60 relative">
-  <div class="relative w-40 h-40">
-    <img
-      v-motion
-      :initial="{ x: 800, y: -100, scale: 1.5, rotate: -50 }"
-      :enter="final"
-      class="absolute inset-0"
-      src="https://sli.dev/logo-square.png"
-      alt=""
-    />
-    <img
-      v-motion
-      :initial="{ y: 500, x: -100, scale: 2 }"
-      :enter="final"
-      class="absolute inset-0"
-      src="https://sli.dev/logo-circle.png"
-      alt=""
-    />
-    <img
-      v-motion
-      :initial="{ x: 600, y: 400, scale: 2, rotate: 100 }"
-      :enter="final"
-      class="absolute inset-0"
-      src="https://sli.dev/logo-triangle.png"
-      alt=""
-    />
-  </div>
-
-  <div
-    class="text-5xl absolute top-14 left-40 text-[#2B90B6] -z-1"
-    v-motion
-    :initial="{ x: -80, opacity: 0}"
-    :enter="{ x: 0, opacity: 1, transition: { delay: 2000, duration: 1000 } }">
-    Slidev
-  </div>
-</div>
-
-<!-- vue script setup scripts can be directly used in markdown, and will only affects current page -->
-<script setup lang="ts">
-const final = {
-  x: 0,
-  y: 0,
-  rotate: 0,
-  scale: 1,
-  transition: {
-    type: 'spring',
-    damping: 10,
-    stiffness: 20,
-    mass: 2
-  }
-}
-</script>
-
-<div
-  v-motion
-  :initial="{ x:35, y: 30, opacity: 0}"
-  :enter="{ y: 0, opacity: 1, transition: { delay: 3500 } }">
-
-[Learn more](https://sli.dev/guide/animations.html#motion)
-
-</div>
-
----
-
-# LaTeX
-
-LaTeX is supported out-of-box. Powered by [KaTeX](https://katex.org/).
-
-<div h-3 />
-
-Inline $\sqrt{3x-1}+(1+x)^2$
-
-Block
-$$ {1|3|all}
-\begin{aligned}
-\nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0} \\
-\nabla \cdot \vec{B} &= 0 \\
-\nabla \times \vec{E} &= -\frac{\partial\vec{B}}{\partial t} \\
-\nabla \times \vec{B} &= \mu_0\vec{J} + \mu_0\varepsilon_0\frac{\partial\vec{E}}{\partial t}
-\end{aligned}
-$$
-
-[Learn more](https://sli.dev/features/latex)
-
----
-
-# Diagrams
-
-You can create diagrams / graphs from textual descriptions, directly in your Markdown.
-
-<div class="grid grid-cols-4 gap-5 pt-4 -mb-6">
-
-```mermaid {scale: 0.5, alt: 'A simple sequence diagram'}
-sequenceDiagram
-    Alice->John: Hello John, how are you?
-    Note over Alice,John: A typical interaction
-```
-
-```mermaid {theme: 'neutral', scale: 0.8}
-graph TD
-B[Text] --> C{Decision}
-C -->|One| D[Result 1]
-C -->|Two| E[Result 2]
-```
-
-```mermaid
-mindmap
-  root((mindmap))
-    Origins
-      Long history
-      ::icon(fa fa-book)
-      Popularisation
-        British popular psychology author Tony Buzan
-    Research
-      On effectiveness<br/>and features
-      On Automatic creation
-        Uses
-            Creative techniques
-            Strategic planning
-            Argument mapping
-    Tools
-      Pen and paper
-      Mermaid
-```
-
-```plantuml {scale: 0.7}
-@startuml
-
-package "Some Group" {
-  HTTP - [First Component]
-  [Another Component]
-}
-
-node "Other Groups" {
-  FTP - [Second Component]
-  [First Component] --> FTP
-}
-
-cloud {
-  [Example 1]
-}
-
-database "MySql" {
-  folder "This is my folder" {
-    [Folder 3]
-  }
-  frame "Foo" {
-    [Frame 4]
-  }
-}
-
-[Another Component] --> [Example 1]
-[Example 1] --> [Folder 3]
-[Folder 3] --> [Frame 4]
-
-@enduml
-```
-
-</div>
-
-Learn more: [Mermaid Diagrams](https://sli.dev/features/mermaid) and [PlantUML Diagrams](https://sli.dev/features/plantuml)
-
----
-foo: bar
-dragPos:
-  square: 0,-113,0,0
----
-
-# Draggable Elements
-
-Double-click on the draggable elements to edit their positions.
-
-<br>
-
-###### Directive Usage
-
-```md
-<img v-drag="'square'" src="https://sli.dev/logo.png">
-```
-
-<br>
-
-###### Component Usage
-
-```md
-<v-drag text-3xl>
-  <carbon:arrow-up />
-  Use the `v-drag` component to have a draggable container!
-</v-drag>
-```
-
-<v-drag pos="663,206,261,_,-15">
-  <div text-center text-3xl border border-main rounded>
-    Double-click me!
-  </div>
-</v-drag>
-
-<img v-drag="'square'" src="https://sli.dev/logo.png">
-
-###### Draggable Arrow
-
-```md
-<v-drag-arrow two-way />
-```
-
-<v-drag-arrow pos="67,452,253,46" two-way op70 />
-
----
-src: ./pages/imported-slides.md
-hide: false
----
-
----
-
-# Monaco Editor
-
-Slidev provides built-in Monaco Editor support.
-
-Add `{monaco}` to the code block to turn it into an editor:
-
-```ts {monaco}
-import { ref } from 'vue'
-import { emptyArray } from './external'
-
-const arr = ref(emptyArray(10))
-```
-
-Use `{monaco-run}` to create an editor that can execute the code directly in the slide:
+# Create JSON Schema with `zod-to-json-schema`
 
 ```ts {monaco-run}
-import { version } from 'vue'
-import { emptyArray, sayHello } from './external'
+import { z } from 'zod'
+import { zodToJsonSchema } from 'zod-to-json-schema'
 
-sayHello()
-console.log(`vue ${version}`)
-console.log(emptyArray<number>(10).reduce(fib => [...fib, fib.at(-1)! + fib.at(-2)!], [1, 1]))
+const schema = z.object({
+  cards: z.object({
+    term: z.string().describe('This is term'),
+    def: z.string().describe('This is def')
+  }).array()
+})
+
+console.log(zodToJsonSchema(schema))
 ```
+<style>
+.slidev-monaco-container {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+</style>
+
+---
+
+# Upgrade `$generate` function
+
+````md magic-move
+```ts
+async function $generate(promt: string) {
+  const response = await ollama.generate({
+    // ...
+  })
+
+  return response.response
+}
+```
+
+```ts
+async function $generate(prompt: string, schema?: ZodSchema) {
+  const format = schema ? zodToJsonSchema(schema) : undefined
+
+  const response = await ollama.generate({
+    // ...
+    format,
+  })
+
+  return response.response
+}
+```
+
+```ts
+async function $generate(prompt: string, schema?: ZodSchema) {
+  const format = schema ? zodToJsonSchema(schema) : undefined
+
+  const generate = async () => {
+    const response = await ollama.generate({
+      // ...
+      format,
+    })
+
+    return response.response
+  }
+
+  return generate()
+}
+```
+
+```ts{*|10-11|12-18|21|*}
+async function $generate(prompt: string, schema?: ZodSchema) {
+  const format = schema ? zodToJsonSchema(schema) : undefined
+
+  const generate = async () => {
+    const response = await ollama.generate({
+      // ...
+      format,
+    })
+
+    if(!schema)
+      return response.response
+
+    try {
+      return schema.parse(JSON.parse(response.response))
+    }
+    catch (error) {
+      return generate()
+    }
+  }
+
+  return generate()
+}
+```
+````
+
+<!--
+Of course, there muss be a stop in this recursive funciton. But because of the limitation of places
+I will not show it here. And also some error handling when recursive stop such as notify user with it
+ -->
 
 ---
 layout: center
 class: text-center
 ---
 
-# Learn More
+# Demo
 
-[Documentation](https://sli.dev) · [GitHub](https://github.com/slidevjs/slidev) · [Showcases](https://sli.dev/resources/showcases)
+<style>
+h1{
+  font-size: 5rem;
+}
+</style>
+
+<!--
+Demo with generate tests on set
+ -->
+
+---
+layout: two-cols
+---
+
+# SQLite with Vector
+
+- using [`sqlite-vec`](https://github.com/asg017/sqlite-vec) extension
+```sql
+create virtual table "sets" using vec0 (
+  id integer primary key autoincrement,
+  +title text,
+  +cards text,
+  +tags text,
+  embedding float[768],
+  +createAt text,
+);
+```
+
+```sql
+  -- Auxiliary column: unindexed, fast lookups
+  +title text,
+
+  -- Vector text embedding with 768 dimensions
+  embedding float[768],
+```
+
+::right::
+
+<h1 class="opacity-0">&npsb;</h1>
+
+- selecting most matched set
+
+```sql
+select
+      id,
+      title,
+      cards,
+      tags,
+      createAt,
+      vec_distance_cosine(embedding, ?) as distance
+from sets
+order by distance;
+```
+
+<div style="text-align: left;">
+$$
+\begin{aligned}
+\text{Cosine Distance} &= 1 - \cos(\theta) \\
+&= 1 - \frac{\mathbf{u} \cdot \mathbf{v}}{\|\mathbf{u}\| \|\mathbf{v}\|}
+\end{aligned}
+$$
+</div>
+
+<style>
+.slidev-layout {
+  gap: 2rem
+}
+
+.katex-html{
+  text-align: left
+}
+</style>
+
+---
+
+# Embeddings
+
+```ts {monaco-run}
+import ollama from 'ollama/browser'
+
+const response = await ollama.embed({
+  model: 'nomic-embed-text',
+  input: 'Hello from the other side.',
+})
+
+console.log('Length:', response.embeddings[0].length)
+console.log('First 10:', response.embeddings[0].slice(0, 10))
+```
+
+```ts
+// Before inserting new set into DB
+set.embedding = await $embed(JSON.stringify({
+  title: set.title,
+  cards: set.cards,
+  tags: set.tags,
+}))
+```
+---
+
+# Chat with LLM
+
+- Basic
+
+````md magic-move
+```ts
+const messages = [
+  { role: 'system', content: `You are an assistant for my studies.` }
+]
+```
+
+```ts {3|6-7}
+const messages = [
+  { role: 'system', content: `You are an assistant for my studies.` },
+  { role: 'user', content: 'Explain LLM in 3 sentences.' },
+]
+
+const response = await $chat(messages)
+messages.push({role: 'assistant', content: response.content })
+```
+
+```ts {4|5|9-10|6|*}
+const messages = [
+  { role: 'system', content: `You are an assistant for my studies.` },
+  { role: 'user', content: 'Explain LLM in 3 sentences.' },
+  { role: 'assistant', content: 'A Large Language Model (LLM) is a type of...' },
+  { role: 'user', content: 'Give me a real-case example.' },
+  // ...
+]
+
+const response = await $chat(messages)
+messages.push({role: 'assistant', content: response.content })
+```
+````
+
+<!-- Demo with chat in app -->
+
+---
+hideInToc: true
+---
+
+# Chat with LLM
+
+- Upload file
+
+<v-click>
+
+````md magic-move
+```ts
+type Message = {
+  role: 'system' | 'assistant' | 'user',
+  content: string
+}
+```
+
+```ts {*|3,4}
+type Message =
+(
+  { role: 'system', type: 'text' | 'hidden' } |
+  { role: 'system', type: 'file', name: string } |
+  { role: 'assistant' | 'user' }
+) & { content: string }
+```
+````
+
+</v-click>
+
+<v-click>
+
+```ts
+messages.value.push({
+  role: 'system',
+  content: 'You are a helpful assistant knowledgeable about the following document:',
+  type: 'file',
+  name: file.name,
+})
+
+for (const c of $chunk(content.toString(), { max: 2048 })) {
+  messages.value.push({
+    role: 'system',
+    content: c,
+    type: 'hidden',
+  })
+}
+```
+</v-click>
+
+<!-- Demo with summary -->
+
+---
+layout: center
+class: text-center
+---
+
+# Demo
+
+<style>
+h1{
+  font-size: 5rem;
+}
+</style>
+
+<!--
+Demo with generate tests on set
+ -->
+
+---
+layout: center
+class: text-center
+---
+
+PDF, QR Code
 
 <PoweredBySlidev mt-10 />
