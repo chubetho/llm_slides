@@ -6,6 +6,7 @@ presenter: false
 colorSchema: auto
 transition: slide-left
 mdc: true
+hideInToc: true
 ---
 
 # Build Web App with LLM
@@ -16,8 +17,12 @@ Note
 -->
 
 ---
+hideInToc: true
+---
 
-<Toc minDepth="1" maxDepth="1" />
+# Contents
+
+<Toc />
 
 ---
 
@@ -363,6 +368,7 @@ I will not show it here. And also some error handling when recursive stop such a
 ---
 layout: center
 class: text-center
+hideInToc: true
 ---
 
 # Demo
@@ -558,6 +564,7 @@ for (const c of $chunk(content.toString(), { max: 2048 })) {
 ---
 layout: center
 class: text-center
+hideInToc: true
 ---
 
 # Demo
@@ -573,10 +580,17 @@ Demo with generate tests on set
  -->
 
 ---
-layout: center
-class: text-center
----
 
-PDF, QR Code
+# Thank you
 
-<PoweredBySlidev mt-10 />
+<div class="flex gap-32 mt-16">
+  <div class="shrink-0 grow flex flex-col items-center gap-6">
+    <img src="/qr.png" class="size-64" />
+    <a href="https://chubetho.github.io/llm_slides">https://chubetho.github.io/llm_slides</a>
+  </div>
+
+   <div class="shrink-0 grow flex flex-col items-center gap-6">
+    <img src="/project.png" class="size-64" />
+    <a href="https://github.com/chubetho/LLM">https://github.com/chubetho/LLM</a>
+  </div>
+</div>
