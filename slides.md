@@ -1,12 +1,17 @@
 ---
 theme: default
 title: Build Web App with LLM
+titleTemplate: '%s'
 author: Tan Phat Nguyen
-presenter: false
-colorSchema: auto
+presenter: true
+twoslash: false
+contextMenu: false
 transition: slide-left
 mdc: true
 hideInToc: true
+favicon: '/bot.png'
+drawings:
+  enabled: false
 ---
 
 # Build Web App with LLM
@@ -594,3 +599,9 @@ Demo with generate tests on set
     <a href="https://github.com/chubetho/LLM">https://github.com/chubetho/LLM</a>
   </div>
 </div>
+
+---
+layout: center
+---
+
+<PoweredBySlidev />
