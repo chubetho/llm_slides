@@ -12,6 +12,11 @@ hideInToc: true
 favicon: '/bot.png'
 drawings:
   enabled: false
+export:
+  format: pdf
+  withToc: true
+exportFilename: 'llm'
+
 ---
 
 # Build Web App with LLM
