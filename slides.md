@@ -475,6 +475,25 @@ set.embedding = await $embed(JSON.stringify({
   tags: set.tags,
 }))
 ```
+
+---
+layout: center
+class: text-center
+hideInToc: true
+---
+
+# Demo
+
+<style>
+h1{
+  font-size: 5rem;
+}
+</style>
+
+<!--
+Demo with search for document based on vector
+ -->
+
 ---
 
 # Chat with LLM
@@ -564,7 +583,7 @@ for (const c of $chunk(content.toString(), { max: 2048 })) {
 ```
 </v-click>
 
-<!-- Demo with summary -->
+<!-- Demo with summary in chat -->
 
 ---
 layout: center
@@ -581,8 +600,35 @@ h1{
 </style>
 
 <!--
-Demo with generate tests on set
+Demo with summary from pdf or youtube
  -->
+
+---
+
+# Our Journey
+
+<v-clicks every="1">
+
+1. <Link to="3">Find Technology Stack</Link> (Nuxt, SQLite, Ollama)
+
+2. <Link to="4">Experiment with Ollama</Link> (CLI, JS library)
+
+3. <Link to="9">Integrate Ollama into the Application</Link> (Structure Output)
+
+4. <Link to="16">Develop a Simple Use Case with Embeddings</Link> (Search for Sets)
+
+5. <Link to="18">Build Chat Functionality</Link> (Basic, File Upload)
+
+6. <Link to="20">Add Summary Functionality</Link> (Based on Chat Features)
+
+</v-clicks>
+
+<style>
+
+ol{
+  @apply pt-12 flex flex-col gap-4;
+}
+</style>
 
 ---
 
