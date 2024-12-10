@@ -3,6 +3,9 @@ theme: default
 title: Build Web App with LLM
 titleTemplate: '%s'
 author: Tan Phat Nguyen
+info: false
+keywords: LLM,Ollama,SQLite,Nuxt
+download: true
 presenter: true
 twoslash: false
 contextMenu: false
