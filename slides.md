@@ -8,6 +8,7 @@ keywords: LLM,Ollama,SQLite,Nuxt
 download: true
 presenter: true
 twoslash: false
+monacoTypesSource: none
 contextMenu: false
 transition: slide-left
 mdc: true
@@ -19,7 +20,6 @@ export:
   format: pdf
   withToc: true
 exportFilename: 'llm'
-
 ---
 
 # Build Web App with LLM
@@ -69,8 +69,8 @@ ollama run llama3.2:3b
 - Served at [http://localhost:11434](http://localhost:11434)
 ```sh {none|all}
 curl http://localhost:11434/api/generate -d '{
-  "model": "llama3.2",
-  "prompt": "Explain LLM in 3 sentences.',
+  "model": "llama3.2:3b",
+  "prompt": "Explain LLM in 3 sentences.",
   "stream": false
 }'
 ```
@@ -155,7 +155,7 @@ const response = await ollama.chat({
   ],
 })
 
-console.log(response.message)
+console.log(response.message.content)
 ```
 
 ---
@@ -164,8 +164,10 @@ console.log(response.message)
 
 - Generate card's definition
 ```ts
-async function generateDef(c: Card) {
-  c.def = await $generate(`"${c.term}": Provide a short, plain text definition without any redundant information.`)
+async function generateDef(card: Card) {
+  card.def = await $generate(`
+    "${card.term}": Provide a short, plain text definition without any redundant information.
+  `)
 }
 ```
 
@@ -199,11 +201,11 @@ hideInToc: true
 const response = await $generate(
   `Using the reference cards: ${set.value.cards}, generate new, meaningful cards in JSON format using following
   JSON schema:
-{
-  "cards": [
-    { "term": "string", "def": "string" }
-  ]
-}`
+  {
+    "cards": [
+      { "term": "string", "def": "string" }
+    ]
+  }`
 )
 ```
 
@@ -211,19 +213,19 @@ const response = await $generate(
 const response = await $generate(
   `Using the reference cards: ${set.value.cards}, generate new, meaningful cards in JSON format using following
   JSON schema:
-{
-  "cards": [
-    { "term": "string", "def": "string" }
-  ]
-}`
+  {
+    "cards": [
+      { "term": "string", "def": "string" }
+    ]
+  }`
 )
 
-// {
+// "{
 //   "cards": [
 //     { "term": "Capital of Germany", "def": "Berlin" }
 //     ...
 //   ]
-// }
+// }"
 
 const cards = JSON.parse(response).cards // Array of cards
 ```
@@ -239,13 +241,13 @@ const response = await $generate(
 }`
 )
 
-// Here are generated cards as your instruction:
+// "Here are generated cards as your instruction:
 // {
 //   "cards": [
 //     { "term": "Capital of Germany", "def": "Berlin" }
 //     ...
 //   ]
-// }
+// }"
 
 const cards = JSON.parse(response).cards // SyntaxError: Unexpected token 'H', "Here are  "... is not valid JSON
 ```
@@ -271,7 +273,8 @@ const output = `{
   ]
 }`
 
-console.log(schema.parse(JSON.parse(output)))
+const cards = schema.parse(JSON.parse(output)).cards
+console.log(cards)
 ```
 
 <!--
@@ -376,7 +379,7 @@ async function $generate(prompt: string, schema?: ZodSchema) {
 <!--
 Of course, there muss be a stop in this recursive funciton. But because of the limitation of places
 I will not show it here. And also some error handling when recursive stop such as notify user with it
- -->
+-->
 
 ---
 layout: center
@@ -394,37 +397,59 @@ h1{
 
 <!--
 Demo with generate tests on set
- -->
+-->
 
 ---
-layout: two-cols
+disabled: true
 ---
 
 # SQLite with Vector
 
-- using [`sqlite-vec`](https://github.com/asg017/sqlite-vec) extension
+- [`vec0`](https://alexgarcia.xyz/sqlite-vec/features/vec0.html#metadata) virtual tables
+
+| Column | Description | Benefits | Limitations|
+| - | - | - | - |
+| Metadata | Boolean, integer, float, or text data | Can be used in the `WHERE` of KNN query | Slower full scan, slightly inefficient with long strings (`> 12` characters) |
+| Auxiliary | Any kind of data | Eliminates need for an external `JOIN` | Cannot appear in the `WHERE` of KNN query |
+| Partition Key | Internally shards vector index on a given key | `SELECT` query much faster | Can cause oversharding and slow KNN if not used carefully. |
+
+---
+layout: two-cols
+hideInToc: true
+---
+
+# SQLite with [extension](https://alexgarcia.xyz/sqlite-vec)
+
+- creating `sets` table
 ```sql
 create virtual table "sets" using vec0 (
   id integer primary key autoincrement,
-  +title text,
+  title text partition key,
   +cards text,
   +tags text,
   embedding float[768],
-  +createAt text,
+  createAt text partition key,
 );
 ```
 
 ```sql
-  -- Auxiliary column: unindexed, fast lookups
-  +title text,
+  -- Auxiliary columns
+  +cards text
+  +tags text
 
-  -- Vector text embedding with 768 dimensions
+  -- Vector columns
   embedding float[768],
+
+  -- Partition Key columns:
+  title text partition key
+  createAt text partition key
 ```
 
 ::right::
 
 <h1 class="opacity-0">&npsb;</h1>
+
+<v-clicks>
 
 - selecting most matched set
 
@@ -435,8 +460,9 @@ select
       cards,
       tags,
       createAt,
-      vec_distance_cosine(embedding, ?) as distance
+      vec_distance_cosine(embedding, input) as distance
 from sets
+limit 5
 order by distance;
 ```
 
@@ -448,6 +474,8 @@ $$
 \end{aligned}
 $$
 </div>
+
+</v-clicks>
 
 <style>
 .slidev-layout {
@@ -500,7 +528,7 @@ h1{
 
 <!--
 Demo with search for document based on vector
- -->
+-->
 
 ---
 
@@ -539,7 +567,9 @@ messages.push({role: 'assistant', content: response.content })
 ```
 ````
 
-<!-- Demo with chat in app -->
+<!--
+Demo with chat in app
+-->
 
 ---
 hideInToc: true
@@ -591,7 +621,9 @@ for (const c of $chunk(content.toString(), { max: 2048 })) {
 ```
 </v-click>
 
-<!-- Demo with summary in chat -->
+<!--
+Demo with summary in chat
+-->
 
 ---
 layout: center
@@ -609,7 +641,7 @@ h1{
 
 <!--
 Demo with summary from pdf or youtube
- -->
+-->
 
 ---
 
@@ -639,18 +671,24 @@ ol{
 </style>
 
 ---
+hideInToc: true
+---
 
 # Thank you
 
 <div class="flex gap-32 mt-16">
-  <div class="shrink-0 grow flex flex-col items-center gap-6">
+  <div class="shrink-0 grow flex flex-col items-center">
     <img src="/qr.png" class="size-64" />
-    <a href="https://chubetho.github.io/llm_slides">https://chubetho.github.io/llm_slides</a>
+    <a class="mt-6" href="https://chubetho.github.io/llm_slides">https://chubetho.github.io/llm_slides</a>
+    <p class="mt-3 text-black/50 dark:text-white/50"> Slides </p>
+
   </div>
 
-   <div class="shrink-0 grow flex flex-col items-center gap-6">
+   <div class="shrink-0 grow flex flex-col items-center">
     <img src="/project.png" class="size-64" />
-    <a href="https://github.com/chubetho/LLM">https://github.com/chubetho/LLM</a>
+    <a class="mt-6" href="https://github.com/chubetho/LLM">https://github.com/chubetho/LLM</a>
+    <p class="mt-3 text-black/50 dark:text-white/50"> Source Code </p>
+
   </div>
 </div>
 
